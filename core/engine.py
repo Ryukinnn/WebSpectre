@@ -25,6 +25,7 @@ class AssessmentEngine:
         self.loaded_modules: List[BaseModule] = []
         self.all_findings: List[Dict[str, Any]] = []
         self.start_time = 0.0
+        self.last_target = "unknown"
 
     def register_modules(self, modules: List[BaseModule]):
         """Mendaftarkan modul-modul yang telah divalidasi oleh PluginLoader."""
@@ -76,6 +77,7 @@ class AssessmentEngine:
     def start_assessment(self, target: str):
         """Titik masuk sinkron yang dipanggil oleh CLI (spectre.py)."""
         self.start_time = time.time()
+        self.last_target = target
         self.out.info(f"Memulai analisis keamanan untuk target: [bold white]{target}[/bold white]")
         
         if not self.loaded_modules:
