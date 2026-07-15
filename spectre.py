@@ -113,13 +113,13 @@ def show_about():
     ))
     sys.exit(0)
 
-def main_menu(engine: AssessmentEngine, out: OutputManager):
+def main_menu(engine: AssessmentEngine, out: OutputManager, config: ConfigManager):
     """Merender menu utama yang interaktif."""
-    menu_text = """[bold cyan]1.[/bold cyan] Analisis Website
-[bold cyan]2.[/bold cyan] Pemeriksaan Konfigurasi
-[bold cyan]3.[/bold cyan] Analisis Teknologi
+    menu_text = """[bold cyan]1.[/bold cyan] Analisis Website Lengkap
+[bold cyan]2.[/bold cyan] Pemeriksaan Konfigurasi & HTTP
+[bold cyan]3.[/bold cyan] Analisis Teknologi & Discovery
 [bold cyan]4.[/bold cyan] Manajemen Modul
-[bold cyan]5.[/bold cyan] Laporan
+[bold cyan]5.[/bold cyan] Buat Laporan
 [bold cyan]6.[/bold cyan] Pengaturan
 [bold cyan]0.[/bold cyan] Keluar"""
 
@@ -131,25 +131,90 @@ def main_menu(engine: AssessmentEngine, out: OutputManager):
             pilihan = IntPrompt.ask("[bold cyan]Pilih menu[/bold cyan]", choices=["0", "1", "2", "3", "4", "5", "6"])
             
             if pilihan == 0:
-                out.success("Terakhir keluar dari sistem. Sampai jumpa!")
+                out.success("Terima kasih telah menggunakan WebSpectre Framework. Sampai jumpa!")
                 break
+                
             elif pilihan == 1:
                 target = console.input("[bold cyan][?] Masukkan URL Target (contoh: example.com):[/bold cyan] ").strip()
                 if not target:
                     out.error("Target tidak boleh kosong!")
                     continue
+                from utils.validator import normalize_target
+                target = normalize_target(target)
+                engine.start_assessment(target)
                 
-                # Normalisasi target dari utils (misal tambah http/https jika kurang)
+            elif pilihan == 2:
+                target = console.input("[bold cyan][?] Masukkan URL Target (contoh: example.com):[/bold cyan] ").strip()
+                if not target:
+                    continue
                 from utils.validator import normalize_target
                 target = normalize_target(target)
                 
-                engine.start_assessment(target)
+                # Backup modul asli, filter hanya kategori HTTP Analysis
+                all_mods = engine.loaded_modules
+                engine.loaded_modules = [m for m in all_mods if m.meta.get("category") == "HTTP Analysis"]
+                if not engine.loaded_modules:
+                    out.warning("Tidak ada modul HTTP Analysis yang dimuat.")
+                else:
+                    engine.start_assessment(target)
+                # Restore
+                engine.loaded_modules = all_mods
                 
-            else:
-                out.warning(f"Fitur pada menu {pilihan} sedang dalam tahap pengembangan akhir.")
+            elif pilihan == 3:
+                target = console.input("[bold cyan][?] Masukkan URL Target (contoh: example.com):[/bold cyan] ").strip()
+                if not target:
+                    continue
+                from utils.validator import normalize_target
+                target = normalize_target(target)
+                
+                # Backup modul asli, filter hanya kategori Technology Analysis & Discovery
+                all_mods = engine.loaded_modules
+                engine.loaded_modules = [m for m in all_mods if m.meta.get("category") in ["Technology Analysis", "Discovery"]]
+                if not engine.loaded_modules:
+                    out.warning("Tidak ada modul kategori tersebut yang dimuat.")
+                else:
+                    engine.start_assessment(target)
+                # Restore
+                engine.loaded_modules = all_mods
+                
+            elif pilihan == 4:
+                table = Table(box=box.SIMPLE, border_style="cyan")
+                table.add_column("No", style="cyan", justify="right")
+                table.add_column("Nama Modul", style="white")
+                table.add_column("Kategori", style="green")
+                table.add_column("Tingkat Risiko", style="yellow")
+                
+                for idx, m in enumerate(engine.loaded_modules, start=1):
+                    table.add_row(str(idx), m.meta.get("name"), m.meta.get("category"), m.meta.get("risk_level"))
+                
+                console.print(Panel(table, title="[bold white]Daftar Modul Terinstal[/bold white]", border_style="cyan"))
+                
+            elif pilihan == 5:
+                if not engine.all_findings:
+                    out.warning("Belum ada data temuan. Jalankan Analisis Website terlebih dahulu.")
+                else:
+                    from core.reporter import ReportGenerator
+                    reporter = ReportGenerator(out=out, output_dir=config.get("reporting.save_directory", "reports/"))
+                    formats = ["json", "md"]
+                    reporter.export(engine.last_target, engine.all_findings, formats)
+                    out.info(f"Laporan digenerate untuk target: {engine.last_target}")
+                    
+            elif pilihan == 6:
+                table = Table(title="Konfigurasi Sistem (config/config.yaml)", box=box.SIMPLE, border_style="cyan")
+                table.add_column("Kunci Konfigurasi", style="cyan")
+                table.add_column("Nilai Saat Ini", style="white")
+                
+                for k, v in config.config_data.items():
+                    if isinstance(v, dict):
+                        for sub_k, sub_v in v.items():
+                            table.add_row(f"{k}.{sub_k}", str(sub_v))
+                    else:
+                        table.add_row(k, str(v))
+                        
+                console.print(table)
+
         except KeyboardInterrupt:
-            out.warning("\nInterupsi terdeteksi. Keluar dari framework.")
-            break
+            out.warning("\nInterupsi terdeteksi. Kembali ke menu utama.")
         except Exception as e:
             out.error(f"Terjadi kesalahan sistem: {str(e)}", cause=str(e), solution="Periksa logs/errors.log")
 
