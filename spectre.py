@@ -244,7 +244,7 @@ def main():
     engine.register_modules(modules)
     
     show_system_info(loader)
-    main_menu(engine, out)
+    main_menu(engine, out, config)
 
 if __name__ == "__main__":
     # Cegah eksekusi dengan Python versi lama
