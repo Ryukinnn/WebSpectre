@@ -43,6 +43,9 @@ async def fetch_headers(url: str, timeout: int = 15) -> Optional[Dict[str, str]]
         async with aiohttp.ClientSession(connector=connector, timeout=client_timeout, headers=headers_req) as session:
             async with session.get(url, allow_redirects=True) as response:
                 return dict(response.headers)
+    except Exception:
+        return None
+
 async def fetch_generic(url: str, method: str = "GET", headers: Optional[Dict[str, str]] = None, timeout: int = 15) -> Optional[aiohttp.ClientResponse]:
     """Melakukan HTTP request generik (GET, POST, OPTIONS, dll). 
     Catatan: Mengembalikan objek respons utuh (yang harus di-handle oleh pemanggil).
