@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "WebSpectre"
+version = "1.0.0"
+description = "Professional Website Security Assessment Framework"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Ryukinnn"}
+]
+keywords = ["security", "audit", "framework", "vulnerability", "reconnaissance", "osint"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "Topic :: Security",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: POSIX :: Linux",
+]
+dependencies = [
+    "rich>=13.7.0",
+    "textual>=0.52.1",
+    "pyyaml>=6.0.1",
+    "aiohttp>=3.9.3",
+    "jinja2>=3.1.3",
+    "beautifulsoup4>=4.12.3",
+    "requests>=2.31.0",
+    "colorama>=0.4.6",
+    "cryptography>=42.0.5",
+    "pydantic>=2.6.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/Ryukinnn/WebSpectre"
+Issues = "https://github.com/Ryukinnn/WebSpectre/issues"
+
+[project.scripts]
+webspectre = "spectre:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["core*", "utils*"]
